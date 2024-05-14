@@ -1,15 +1,12 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const router = express.Router();
 
 
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
-// Generar una clave secreta única
-const secretKey = crypto.randomBytes(32).toString('hex');
 
 router.post("/", async (req, res) => {
     try {
@@ -32,7 +29,7 @@ router.post("/", async (req, res) => {
         }
 
         // Generar un token JWT con el nombre de usuario
-        const token = jwt.sign({ username: userData.username }, secretKey, { expiresIn: '1h' });
+        const token = jwt.sign({ username: userData.username }, 'clavesecreta', { expiresIn: '1h' });
 
         res.status(200).json({ message: 'Inicio de sesión exitoso', token });
     } catch (error) {

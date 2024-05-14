@@ -12,7 +12,7 @@ function jwtMiddleware(req, res, next) {
 
     try {
         // Verifica y decodifica el token JWT
-        const decoded = jwt.verify(token, secretKey); 
+        const decoded = jwt.verify(token, 'clavesecreta'); 
         
         // Agrega la información del usuario decodificado al objeto de solicitud
         req.user = decoded;
