@@ -15,32 +15,33 @@ router.get("/", async (req, res) => {
         // Obtener todos los usuarios
         const usersSnapshot = await db.collection('users').get();
 
-        // Recorrer cada usuario
-        usersSnapshot.forEach(userDoc => {
+        // Mapear todas las promesas de obtener blinks para cada usuario
+        const promises = usersSnapshot.docs.map(async userDoc => {
             // Obtener la colección de blinks del usuario actual
             const blinksRef = userDoc.ref.collection('blinks');
             
             // Obtener todos los blinks del usuario actual
-            blinksRef.get().then(blinksSnapshot => {
-                // Agregar cada blink al arreglo de todos los blinks
+            const blinksSnapshot = await blinksRef.get();
+
+            // Si el usuario tiene blinks, agregarlos al arreglo de todos los blinks
+            if (!blinksSnapshot.empty) {
                 blinksSnapshot.forEach(blinkDoc => {
                     allBlinks.push(blinkDoc.data());
                 });
-
-                // Enviar todos los blinks como respuesta cuando se completen todas las promesas
-                if (allBlinks.length === usersSnapshot.size) {
-                    res.json(allBlinks);
-                }
-            }).catch(error => {
-                console.error('Error al obtener blinks del usuario:', error);
-                res.status(500).json({ message: 'Error interno del servidor' });
-            });
+            }
         });
+
+        // Esperar la resolución de todas las promesas
+        await Promise.all(promises);
+
+        // Enviar todos los blinks como respuesta
+        res.json(allBlinks);
     } catch (error) {
-        console.error('Error al obtener usuarios:', error);
+        console.error('Error al obtener blinks de todos los usuarios:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
 
 
 router.post("/", async (req, res) => {
@@ -58,6 +59,7 @@ router.post("/", async (req, res) => {
         const blinkId = uuidv4();
         const blinkRef = userRef.collection('blinks').doc(blinkId);
         await blinkRef.set({
+            user: username,
             id: blinkId,
             message: message
         });
