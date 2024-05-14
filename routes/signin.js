@@ -36,7 +36,6 @@ router.post("/", async (req, res) => {
             username: username,
             email: email,
             password: password,
-            blinks: []
         });
 
         res.status(201).json({ message: 'Usuario creado exitosamente' });
