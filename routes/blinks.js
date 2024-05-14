@@ -59,7 +59,7 @@ router.post("/", async (req, res) => {
         const blinkId = uuidv4();
         const blinkRef = userRef.collection('blinks').doc(blinkId);
         await blinkRef.set({
-            user: username,
+            username: username,
             id: blinkId,
             message: message
         });
