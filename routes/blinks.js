@@ -6,6 +6,10 @@ const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
+const jwtMiddleware= require('../components/jwtMiddleware');
+
+router.use(jwtMiddleware);
+
 // Ruta para obtener todos los blinks de todos los usuarios
 router.get("/", async (req, res) => {
     try {

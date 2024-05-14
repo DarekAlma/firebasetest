@@ -32,7 +32,7 @@ router.post("/", async (req, res) => {
         }
 
         // Generar un token JWT con el nombre de usuario
-        const token = jwt.sign({ username: userData.username }, secretKey);
+        const token = jwt.sign({ username: userData.username }, secretKey, { expiresIn: '1h' });
 
         res.status(200).json({ message: 'Inicio de sesión exitoso', token });
     } catch (error) {
