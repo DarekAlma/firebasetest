@@ -9,7 +9,7 @@ const jwtMiddleware= require('../components/jwtMiddleware');
 
 router.use(jwtMiddleware);
 
-router.get('/search/:query', async (req, res) => {
+router.get('/:query', async (req, res) => {
     try {
         const db = admin.firestore();
         const query = req.params.query;
