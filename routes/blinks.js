@@ -118,59 +118,81 @@ router.post("/:username/:blinkId", async (req, res) => {
 });
 
 
-// Ruta para buscar tweets por hashtag
 router.get('/search/:query', async (req, res) => {
     try {
         const db = admin.firestore();
         const query = req.params.query;
+
         // Verificar si la cadena comienza con el hashtag
         if (!query.startsWith('#')) {
             return res.status(400).json({ error: 'La consulta debe comenzar con un hashtag (#)' });
         }
+
         // Obtener la palabra/letras después del hashtag
         const hashtag = query.substring(1);
-        // Consultar la base de datos para obtener los tweets que contienen el hashtag
-        const snapshot = await db.collectionGroup('blinks').where('message', '>=', hashtag).where('message', '<=', hashtag + '\uf8ff').get();
-        const results = [];
-        snapshot.forEach(doc => {
-            results.push(doc.data());
+        const allBlinks = [];
+
+        // Obtener todos los usuarios
+        const usersSnapshot = await db.collection('users').get();
+
+        // Mapear todas las promesas de obtener blinks para cada usuario
+        const promises = usersSnapshot.docs.map(async userDoc => {
+            // Obtener la colección de blinks del usuario actual
+            const blinksRef = userDoc.ref.collection('blinks');
+
+            // Consultar los blinks del usuario actual que contienen el hashtag
+            const snapshot = await blinksRef.where('message', '>=', hashtag).where('message', '<=', hashtag + '\uf8ff').get();
+
+            // Agregar los blinks encontrados al arreglo de todos los blinks
+            if (!snapshot.empty) {
+                snapshot.forEach(blinkDoc => {
+                    allBlinks.push(blinkDoc.data());
+                });
+            }
         });
-        res.json(results);
+
+        // Esperar la resolución de todas las promesas
+        await Promise.all(promises);
+
+        // Enviar los blinks encontrados como respuesta
+        res.json(allBlinks);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
 
 // Ruta para borrar un blink específico
 router.delete('/:username/:blinkId', async (req, res) => {
     try {
         const username = req.params.username;
         const blinkId = req.params.blinkId;
-        
-        // Verificar si el usuario existe
-        const userRef = db.collection('users').doc(username);
-        const userDoc = await userRef.get();
-        if (!userDoc.exists) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
+
+        // Verificar si el parámetro blinkId es válido
+        if (!blinkId) {
+            return res.status(400).json({ error: "Falta el parámetro obligatorio: blinkId" });
         }
 
-        // Verificar si el blink existe para ese usuario
-        const blinkRef = userRef.collection('blinks').doc(blinkId);
+        const db = admin.firestore();
+        const blinkRef = db.collection('users').doc(username).collection('blinks').doc(blinkId);
         const blinkDoc = await blinkRef.get();
+
+        // Verificar si el blink existe
         if (!blinkDoc.exists) {
             return res.status(404).json({ message: 'Blink no encontrado' });
         }
 
-        // Borrar el blink
+        // Eliminar el blink
         await blinkRef.delete();
-        
+
         res.status(200).json({ message: 'Blink eliminado exitosamente' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
 
 
 module.exports = router;
