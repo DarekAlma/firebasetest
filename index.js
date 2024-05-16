@@ -4,6 +4,7 @@ const signInRouter = require("./routes/signin");
 const logInRouter = require("./routes/login");
 const usersRouter = require("./routes/users");
 const blinksRouter = require("./routes/blinks");
+const searchRouter =require("./routes/search");
 
 // Configuración de Firebase Admin SDK
 const serviceAccount = require('./serviceAccount/blinkleback-firebase-adminsdk-t340o-2972d4c26e.json');
@@ -24,6 +25,7 @@ app.use("/sign", signInRouter);
 app.use("/log", logInRouter);
 app.use("/users", usersRouter);
 app.use("/blinks", blinksRouter);
+app.use("/search",searchRouter);
 
 app.listen(PORT, () => {
   console.log(`Servidor está vivito y corriendo en ${PORT}`);
