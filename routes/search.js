@@ -14,30 +14,30 @@ router.get('/:query', async (req, res) => {
         const db = admin.firestore();
         const query = req.params.query;
 
-        // Obtener todos los blinks que contienen el query en el mensaje
+        // Verificar si la cadena comienza con el hashtag
+        let hashtag = '';
+        if (query.startsWith('#')) {
+            // Si comienza con un hashtag, obtener la palabra/letras después del hashtag
+            hashtag = query.substring(1);
+        } else {
+            // Si no comienza con un hashtag, usar la cadena completa como la consulta
+            hashtag = query;
+        }
+
         const allBlinks = [];
 
-        // Obtener todos los usuarios
-        const usersSnapshot = await db.collection('users').get();
+        // Consultar la base de datos para obtener los blinks que contienen el hashtag
+        const snapshot = await db.collectionGroup('blinks').where('message', '>=', hashtag).where('message', '<=', hashtag + '\uf8ff').get();
 
-        // Mapear todas las promesas de obtener blinks para cada usuario
-        const promises = usersSnapshot.docs.map(async userDoc => {
-            // Obtener la colección de blinks del usuario actual
-            const blinksRef = userDoc.ref.collection('blinks');
-
-            // Consultar los blinks del usuario actual que contienen el query
-            const snapshot = await blinksRef.where('message', '>=', query).where('message', '<=', query + '\uf8ff').get();
-
-            // Agregar los blinks encontrados al arreglo de todos los blinks
-            if (!snapshot.empty) {
-                snapshot.forEach(blinkDoc => {
-                    allBlinks.push(blinkDoc.data());
-                });
-            }
+        // Agregar los blinks encontrados al arreglo de resultados
+        snapshot.forEach(doc => {
+            allBlinks.push(doc.data());
         });
 
-        // Esperar la resolución de todas las promesas
-        await Promise.all(promises);
+        // Verificar si no se encontraron blinks
+        if (allBlinks.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron tweets que coincidan con la búsqueda.' });
+        }
 
         // Enviar los blinks encontrados como respuesta
         res.json(allBlinks);
