@@ -14,13 +14,7 @@ router.get('/:query', async (req, res) => {
         const db = admin.firestore();
         const query = req.params.query;
 
-        // Verificar si la cadena comienza con el hashtag
-        if (!query.startsWith('#')) {
-            return res.status(400).json({ error: 'La consulta debe comenzar con un hashtag (#)' });
-        }
-
-        // Obtener la palabra/letras después del hashtag
-        const hashtag = query.substring(1);
+        // Obtener todos los blinks que contienen el query en el mensaje
         const allBlinks = [];
 
         // Obtener todos los usuarios
@@ -31,8 +25,8 @@ router.get('/:query', async (req, res) => {
             // Obtener la colección de blinks del usuario actual
             const blinksRef = userDoc.ref.collection('blinks');
 
-            // Consultar los blinks del usuario actual que contienen el hashtag
-            const snapshot = await blinksRef.where('message', '>=', hashtag).where('message', '<=', hashtag + '\uf8ff').get();
+            // Consultar los blinks del usuario actual que contienen el query
+            const snapshot = await blinksRef.where('message', '>=', query).where('message', '<=', query + '\uf8ff').get();
 
             // Agregar los blinks encontrados al arreglo de todos los blinks
             if (!snapshot.empty) {
@@ -52,5 +46,6 @@ router.get('/:query', async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
 
 module.exports = router;
