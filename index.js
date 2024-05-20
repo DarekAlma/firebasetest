@@ -1,6 +1,7 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const signInRouter = require("./routes/signin");
+const cors = require('cors'); // Importar el paquete de cors
 const logInRouter = require("./routes/login");
 const usersRouter = require("./routes/users");
 const blinksRouter = require("./routes/blinks");
@@ -16,6 +17,9 @@ admin.initializeApp({
 
 const PORT = 3000;
 const app = express();
+
+// Configurar CORS
+app.use(cors()); // Agregar esto para habilitar CORS
 
 app.get("/", (req, res) => {
   res.send("Blinkle Funcionando :)   /sign     /log     /users   /users/:username   /blinks   /blinks/:username   /blinks/:blinkId  ");
