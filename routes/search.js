@@ -9,30 +9,55 @@ const jwtMiddleware= require('../components/jwtMiddleware');
 
 router.use(jwtMiddleware);
 
-router.get('/:query', async (req, res) => {
+router.get('/search', async (req, res) => {
     try {
-        const db = admin.firestore();
-        const query = req.params.query;
+        const query = req.query.q; // Obtener la consulta de búsqueda de los parámetros de la URL
 
-        // Obtener todos los blinks que contienen la letra o palabra en el mensaje
+        if (!query) {
+            return res.status(400).json({ error: 'Debe proporcionar una consulta de búsqueda' });
+        }
+
+        const db = admin.firestore();
         const allBlinks = [];
 
-        // Consultar los blinks de todos los usuarios que contienen la letra o palabra en el mensaje
-        const snapshot = await db.collectionGroup('blinks').where('message', '>=', query).where('message', '<=', query + '\uf8ff').get();
+        // Obtener todos los usuarios
+        const usersSnapshot = await db.collection('users').get();
 
-        // Iterar sobre los documentos de los blinks encontrados
-        snapshot.forEach(doc => {
-            // Agregar cada documento de blink al arreglo de todos los blinks
-            allBlinks.push(doc.data());
+        // Mapear todas las promesas de obtener blinks para cada usuario
+        const promises = usersSnapshot.docs.map(async userDoc => {
+            // Obtener la colección de blinks del usuario actual
+            const blinksRef = userDoc.ref.collection('blinks');
+
+            // Consultar los blinks del usuario actual que contienen la consulta
+            const snapshot = await blinksRef.where('message', '>=', query).get(); // Quitamos el límite superior
+
+            // Filtrar los blinks que contienen la consulta en cualquier parte del mensaje
+            const filteredBlinks = snapshot.docs.filter(doc => doc.data().message.includes(query));
+
+            // Agregar los blinks encontrados al arreglo de todos los blinks
+            if (filteredBlinks.length > 0) {
+                filteredBlinks.forEach(blinkDoc => {
+                    allBlinks.push(blinkDoc.data());
+                });
+            }
         });
 
-        // Enviar los blinks encontrados como respuesta
+        // Esperar la resolución de todas las promesas
+        await Promise.all(promises);
+
+        if (allBlinks.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron resultados para la consulta proporcionada' });
+        }
+
         res.json(allBlinks);
     } catch (error) {
-        console.error(error);
+        console.error('Error al procesar la solicitud:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
+
+
 
 
 

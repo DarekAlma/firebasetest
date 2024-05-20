@@ -25,7 +25,7 @@ app.use("/sign", signInRouter);
 app.use("/log", logInRouter);
 app.use("/users", usersRouter);
 app.use("/blinks", blinksRouter);
-app.use("/search",searchRouter);
+app.use('/',searchRouter);
 
 app.listen(PORT, () => {
   console.log(`Servidor está vivito y corriendo en ${PORT}`);
